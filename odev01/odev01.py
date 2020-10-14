@@ -33,5 +33,6 @@ while (count < sorusay):
         tuple = (isim, soyisim, yas)
         sozluk[numara] = tuple
         control = 0
-print("Sozluk basiliyor:")
-print(sozluk)
+print("Sozluk sirali basiliyor:")
+for key, value in sorted(sozluk.items(), key=lambda x: x[0]):
+    print("{} : {}".format(key, value))
