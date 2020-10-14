@@ -34,5 +34,5 @@ while (count < sorusay):
         sozluk[numara] = tuple
         control = 0
 print("Sozluk sirali basiliyor:")
-for key, value in sorted(sozluk.items(), key=lambda x: x[0]):
+for key, value in sorted(sozluk.items(), key=lambda x: int(x[0])): #lambda fonksiyonu ile keyleri sort edip bas
     print("{} : {}".format(key, value))
