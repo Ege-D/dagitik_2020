@@ -102,7 +102,7 @@ encoded_split = [""]
 while not receiveQueue.empty():
     encoded_split.append(receiveQueue.get())
 
-fName = "cryptedthread_{}_{}_{}.txt".format(str(s), str(n), str(l))
+fName = "crypted_thread_{}_{}_{}.txt".format(str(s), str(n), str(l))
 f = open(fName, "w")
 for string in encoded_split:
     f.write(string)
