@@ -53,7 +53,7 @@ class Thread (threading.Thread):
                 self.socket.close()
                 print("Ended connection with", self.addr)
                 #print_lock.release()
-                self.pdf.output("ciktisunucu.pdf")
+                self.pdf.output("cikti_sunucu.pdf")
                 break
             else:
                 self.socket.send("Anlamadim".encode())

@@ -28,4 +28,4 @@ while True:
         s.close()
         break
 
-pdf.output("ciktiistemci.pdf")
+pdf.output("cikti_istemci.pdf")
