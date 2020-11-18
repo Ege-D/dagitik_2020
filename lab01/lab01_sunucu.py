@@ -51,7 +51,7 @@ class Thread (threading.Thread):
             elif message == 'STA':
                 n = random.randint(1, 99)
                 guess = 0
-                while n != guess:
+                while n != guess: #tahmin etme dongusu
                     if i == 10:
                         q = 1
                         self.socket.send(("LSS\n").encode()) #LSS -> LOSS kaybetme mesaji, haklar dolunca
@@ -60,7 +60,7 @@ class Thread (threading.Thread):
                     print(self.addr, ': ', message)
                     split_msg = message.split(' ', 1)
                     if split_msg[0] == 'TRY':
-                        if split_msg[1].lstrip('-').isdigit():
+                        if split_msg[1].lstrip('-').isdigit():#tam sayi mi
                             guess = int(split_msg[1])
                             i += 1
                             if guess < n:
@@ -69,7 +69,7 @@ class Thread (threading.Thread):
                                 self.socket.send(("GTH "+str(i)+"\n").encode())
                             else:
                                 self.socket.send(("WIN "+str(i)+"\n").encode())
-                        else:
+                        else: #tam sayi degil
                             self.socket.send(("PRR\n").encode())
                     elif message == 'TIC':
                         self.socket.send(("TOC\n").encode())
@@ -77,17 +77,17 @@ class Thread (threading.Thread):
                         self.socket.send(("BYE\n").encode())
                         q = 1
                         break
-                    elif message == 'STA':
+                    elif message == 'STA': #restart
                         n = random.randint(1, 99)
                         i = 0
                         self.socket.send(("Oyun bastan basliyor.\n").encode())
-                    else:
+                    else: #try, tic, qui veya sta degil
                         self.socket.send(("ERR\n").encode())
             else:
                 split_msg = message.split(' ', 1)
-                if split_msg[0] == 'TRY' or message == 'TRY':
+                if split_msg[0] == 'TRY' or message == 'TRY': #oyun disi try
                     self.socket.send(("GRR\n").encode())
-                else:
+                else: #oyun disi tic, qui, sta veya try degil
                     self.socket.send(("ERR\n").encode())
             if q == 1:
                 break
