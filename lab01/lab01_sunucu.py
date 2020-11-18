@@ -79,6 +79,8 @@ class Thread (threading.Thread):
                         break
                     elif message == 'STA':
                         n = random.randint(1, 99)
+                        i = 0
+                        self.socket.send(("Oyun bastan basliyor.\n").encode())
                     else:
                         self.socket.send(("ERR\n").encode())
             else:
