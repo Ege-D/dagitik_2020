@@ -3,9 +3,6 @@ import threading
 import queue
 from fpdf import FPDF
 from PyPDF2 import PdfFileWriter, PdfFileReader
-import io
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
 
 
 server_socket = socket.socket()
@@ -18,6 +15,7 @@ server_socket.bind((host, port))
 
 server_socket.listen(5)
 
+#write thread
 class writeThread (threading.Thread):
     def __init__(self, threadID, name, socket, addr, dict, fihrist, lq):
         threading.Thread.__init__(self)
@@ -27,25 +25,27 @@ class writeThread (threading.Thread):
         self.addr = addr
         self.dict = dict
         self.fihrist = fihrist
-        self.lq = lq 
-        
+        self.lq = lq
+
     def run(self):
         wq = dict[self.name]
         self.socket.send('TIN'.encode())
         queueLock.acquire()
+        #log TIN connection check
         self.lq.put('Server to ' + str(addr) + ': TIN')
         queueLock.release()
         while True:
             if not wq.empty():
                 queueLock.acquire()
                 data = wq.get()
-                self.lq.put(data)
+                #log every message sent
+                self.lq.put('Server: %s' % (data))
                 queueLock.release()
                 self.socket.send(data.encode())
 
 
 
-
+#read thread
 class readThread (threading.Thread):
     def __init__(self, threadID, name, socket, addr, dict, fihrist, lq):
         threading.Thread.__init__(self)
@@ -56,8 +56,8 @@ class readThread (threading.Thread):
         self.dict = dict
         self.fihrist = fihrist
         self.lq = lq
-    
 
+    #parsing commands, return ERR to sender if command unrecognised
     def parser(self, uname, message, wq):
         message = message.split(' ', 1)
         cmd = message[0]
@@ -67,6 +67,10 @@ class readThread (threading.Thread):
                 uname = message[1]
                 queueLock.acquire()
                 wq.put('WEL %s' % (uname))
+                #Warn other users of the new log in via WRN system message
+                for name in self.fihrist:
+                    if not name == uname and self.fihrist[name] == True:
+                        self.dict[name].put('WRN %s giris yapti.' % (uname))
                 queueLock.release()
                 self.dict[uname] = self.dict[self.name]
 
@@ -76,7 +80,7 @@ class readThread (threading.Thread):
                 queueLock.release()
         elif cmd == 'QUI':
             if uname in self.fihrist and self.fihrist[uname] == True:
-                self.fihrist[uname] = False       
+                self.fihrist[uname] = False
                 queueLock.acquire()
                 wq.put('BYE %s' % (uname))
                 queueLock.release()
@@ -147,10 +151,12 @@ class readThread (threading.Thread):
             receive = self.socket.recv(1024).decode().strip()
             print(receive)
             queueLock.acquire()
+            #log every message received
             self.lq.put(uname + ': ' + receive)
             queueLock.release()
             uname = self.parser(uname, receive, wq)
 
+#logger thread
 class loggerThread (threading.Thread):
     def __init__(self, threadID, name, lq, pdf):
         threading.Thread.__init__(self)
@@ -166,36 +172,29 @@ class loggerThread (threading.Thread):
                 queueLock.acquire()
                 data = self.lq.get()
                 queueLock.release()
-                packet = io.BytesIO()
-                can = canvas.Canvas(packet, pagesize=letter)
-                can.drawString(10, 100, data)
-                can.save()
-                packet.seek(0)
-                new_pdf = PdfFileReader(packet)
-                existing_pdf = PdfFileReader(open("cikti_logger.pdf", "rb"))
-                output = PdfFileWriter()
-                page = existing_pdf.getPage(i)
-                page.mergePage(new_pdf.getPage(i))
-                output.addPage(page)
-                outputStream = open("cikti_logger.pdf", "wb")
-                output.write(outputStream)
-                outputStream.close()
-
+                #can switch to maintaining a constant .txt file to provide a logger that lasts longer
+                if i < 44:
+                    self.pdf.cell(100, 10, txt = data,
+                        ln = i, align = 'L')
+                    i+=1
+                elif i == 44:
+                    pdf.output('cikti_logger.pdf')
 
 queueLock = threading.Lock()
 dict = {}
 fihrist = {}
+#user list: ege, serhan, tunc, dilek
 fihrist['ege'] = False
 fihrist['serhan'] = False
 fihrist['tunc'] = False
 fihrist['dilek'] = False
-threadID = 1
+threadID = 0
 threads = []
 pdf = FPDF()
 pdf.add_page()
 pdf.set_font("Times", size = 12)
 
-pdf.output('cikti_logger.pdf')
+#logger thread gets id 0
 Name = "Thread-%s" % str(threadID)
 logQueue = queue.Queue()
 thread = loggerThread(threadID, Name, logQueue, pdf)
@@ -203,6 +202,7 @@ thread.start()
 threads.append(thread)
 threadID+=1
 while True:
+    #create new write and read threads for each connection
     Name = "Thread-%s" % str(threadID)
     conn_socket, addr = server_socket.accept()
     print("Got connection from", addr)
