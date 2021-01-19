@@ -90,7 +90,7 @@ class readThread (threading.Thread):
                 wq.put('REJ %s' % (parameter[0]))
                 queueLock.release()
             elif parameter[0] in self.fihrist:
-                if self.fihrist[parameter[0]][0] == parameter[1]:
+                if self.fihrist[parameter[0]][0] == parameter[1] and self.fihrist[parameter[0]][1] == False:
                     x = list(self.fihrist[parameter[0]])
                     x[1] = True
                     self.fihrist[parameter[0]] = tuple(x)
@@ -132,7 +132,10 @@ class readThread (threading.Thread):
             if uname in self.fihrist and self.fihrist[uname][1] == True:
                 param = ''
                 for name in self.fihrist:
-                    param = param + name + ':'
+                    if self.fihrist[name][1] == True:
+                        param = param + name + '(online):'
+                    elif self.fihrist[name][1] == False:
+                        param = param + name + '(offline):'
                 param = param[:-1]
                 queueLock.acquire()
                 wq.put('GLT %s' % (param))
@@ -242,7 +245,12 @@ class readThread (threading.Thread):
                     param = ''
                     for name in self.fihrist:
                         if name in self.room_dict[message[1]][1]:
-                            param = param + name + ':'
+                            if name in self.room_dict[message[1]][0]:
+                                param = param + '*mod*'
+                            if self.fihrist[name][1] == True:
+                                param = param + name + '(online):'
+                            elif self.fihrist[name][1] == False:
+                                param = param + name + '(offline):'
                     param = param[:-1]
                     queueLock.acquire()
                     wq.put('ULT %s' % param)
@@ -273,19 +281,25 @@ class readThread (threading.Thread):
 
         elif cmd == 'LVE':
             if uname in self.fihrist and self.fihrist[uname][1] == True:
+                check = True
                 if message[1] in self.room_dict:
                     if uname in self.room_dict[message[1]][1]:
                         if uname in self.room_dict[message[1]][0]:
                             self.room_dict[message[1]][0].remove(uname)
-                        self.room_dict[message[1]][1].remove(uname)
-                        queueLock.acquire()
-                        wq.put('LFT %s' % message[1])
-                        queueLock.release()
-                        #Warn other users of the user leaving via WRN system message
-                        for name in self.fihrist:
-                            foreign_tuple = self.fihrist[name]
-                            if not name == uname and foreign_tuple[1] == True and name in self.room_dict[message[1]][1]:
-                                self.thread_dict[name].put('WRN %s, %s isimli odadan ayrildi.' % (uname, message[1]))
+                            if not self.room_dict[message[1]][0]:
+                                self.room_dict[message[1]][0].append(uname)
+                                self.thread_dict[uname].put('WRN Son yonetici olarak odayi silmeden veya baska birini yonetici yapmadan odadan ayrilamazsiniz.')
+                                check = False
+                        if check:
+                            self.room_dict[message[1]][1].remove(uname)
+                            queueLock.acquire()
+                            wq.put('LFT %s' % message[1])
+                            queueLock.release()
+                            #Warn other users of the user leaving via WRN system message
+                            for name in self.fihrist:
+                                foreign_tuple = self.fihrist[name]
+                                if not name == uname and foreign_tuple[1] == True and name in self.room_dict[message[1]][1]:
+                                    self.thread_dict[name].put('WRN %s, %s isimli odadan ayrildi.' % (uname, message[1]))
                     else:
                         queueLock.acquire()
                         wq.put('OUT %s' % message[1])
@@ -303,6 +317,10 @@ class readThread (threading.Thread):
             if uname in self.fihrist and self.fihrist[uname][1] == True:
                 parameter = message[1].split(':', 1)
                 if 2 > len(parameter):
+                    queueLock.acquire()
+                    wq.put('ERR')
+                    queueLock.release()
+                elif parameter[1] == uname:
                     queueLock.acquire()
                     wq.put('ERR')
                     queueLock.release()
@@ -344,6 +362,10 @@ class readThread (threading.Thread):
             if uname in self.fihrist and self.fihrist[uname][1] == True:
                 parameter = message[1].split(':', 1)
                 if 2 > len(parameter):
+                    queueLock.acquire()
+                    wq.put('ERR')
+                    queueLock.release()
+                elif parameter[1] == uname:
                     queueLock.acquire()
                     wq.put('ERR')
                     queueLock.release()
@@ -390,7 +412,7 @@ class readThread (threading.Thread):
                         for name in self.fihrist:
                             foreign_tuple = self.fihrist[name]
                             if foreign_tuple[1] == True and name in self.room_dict[message[1]][1]:
-                                self.thread_dict[name].put('WRN %s isimli odada yonetici tarafindan silindi.' % (message[1]))
+                                self.thread_dict[name].put('WRN %s isimli oda yonetici tarafindan silindi.' % (message[1]))
                         self.room_dict.pop(message[1])
                         queueLock.acquire()
                         wq.put('OKD %s' % message[1])
@@ -475,9 +497,9 @@ class readThread (threading.Thread):
 queueLock = threading.Lock()
 #user threads
 thread_dict = {}
-#room info
+#room info {mod_list, user_list, banned_list}
 room_dict = {}
-#user info
+#user info {password, online_status}
 fihrist = {}
 threadID = 1
 threads = []
