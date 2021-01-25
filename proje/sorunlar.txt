@@ -1,0 +1,2 @@
+1. şifrede sadece sayı olma kontrolü yok
+2. KIK yaparken yanlışlıkla 329. satırda parameter[0] yerine parameter[1] yazdığım için kod oda ismini anlamayıp patlıyor. BAN yaparken doğru yazdığım için sorun yok.

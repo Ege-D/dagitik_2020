@@ -1,0 +1,12 @@
+RLS
+LGN torvalds:1972
+REG torvalds:1974
+RLS
+GNL gentoo:selam
+ENT gentoo
+GNL gentoo:tekrar selam
+PRV tux:beni niye banladin?
+ENT ubuntu
+ULS ubuntu
+GNL ubuntu:hey
+KIK ubuntu:tux

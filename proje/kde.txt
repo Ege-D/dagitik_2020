@@ -1,0 +1,9 @@
+REG kde:2020
+LGN kde:2020
+RLS
+ENT ubuntu
+ULS ubuntu
+ADD plasma
+ENT plasma
+RLS
+DEL plasma

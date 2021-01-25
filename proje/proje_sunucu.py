@@ -326,7 +326,7 @@ class readThread (threading.Thread):
                     queueLock.release()
                 elif parameter[0] in self.room_dict:
                     if uname in self.room_dict[parameter[0]][1]:
-                        if parameter[1] in self.room_dict[parameter[1]][1]:
+                        if parameter[1] in self.room_dict[parameter[0]][1]:
                             if uname in self.room_dict[parameter[0]][0] and parameter[1] not in self.room_dict[parameter[0]][0]:
                                 self.room_dict[parameter[0]][1].remove(parameter[1])
                                 queueLock.acquire()

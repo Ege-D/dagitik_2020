@@ -1,0 +1,12 @@
+REG tux:herring
+REG tux:1994
+REG torvalds:1972
+LGN tux:1984
+LGN tux:1994
+ADD gentoo
+ENT gentoo
+KIK gentoo:torvalds
+BAN gentoo:torvalds
+ADD ubuntu
+ENT ubuntu
+MOD ubuntu:torvalds
